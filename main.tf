@@ -15,8 +15,9 @@ variable "image_name" {}
 
 # Create VPC
 resource "aws_vpc" "myapp_vpc" {
-  cidr_block = var.vpc_cidr_block
 
+  cidr_block = var.vpc_cidr_block
+  enable_dns_hostnames = true
   tags = {
     Name = "${var.env_prefix}-vpc"
   }
@@ -45,7 +46,7 @@ resource "aws_internet_gateway" "myapp_igw" {
 # Associate subnet with default Route Table
 resource "aws_default_route_table" "main_rtb" {
   default_route_table_id = aws_vpc.myapp_vpc.default_route_table_id
-
+  
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.myapp_igw.id
@@ -133,5 +134,18 @@ resource "aws_instance" "myapp_server" {
 
   tags = {
     Name = "${var.env_prefix}-server"
+  }
+}
+resource "aws_instance" "myapp_server-two" {
+  ami                    = data.aws_ami.lts_amazon_linux.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.myapp_subnet.id
+  vpc_security_group_ids = [aws_default_security_group.myapp_sg.id]
+  availability_zone      = var.avail_zone
+  associate_public_ip_address = true
+  key_name               = aws_key_pair.ssh-key.key_name
+
+  tags = {
+    Name = "${var.env_prefix}-server-two"
   }
 }
